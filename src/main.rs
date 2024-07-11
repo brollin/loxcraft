@@ -1,6 +1,10 @@
 use std::env;
 use std::fs;
 use std::process;
+mod scanner;
+mod token;
+mod token_type;
+use crate::scanner::Scanner;
 
 fn main() {
     let mut lox = Lox { had_error: false };
@@ -41,11 +45,11 @@ impl Lox {
     }
 
     pub fn run(&self, source: &str) {
-        let scanner = Scanner::new(source);
-        let tokens = scanner.scan_tokens();
+        let mut scanner = Scanner::new(source);
+        scanner.scan_tokens();
 
-        for token in tokens {
-            println!("{token}");
+        for token in scanner.tokens {
+            println!("{}", token.to_string());
         }
     }
 
