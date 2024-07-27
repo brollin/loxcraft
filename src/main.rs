@@ -24,7 +24,7 @@ pub struct Lox {
 }
 
 impl Lox {
-    pub fn run_file(&self, path: &str) {
+    pub fn run_file(&mut self, path: &str) {
         let source = fs::read_to_string(path).expect("Failed to read file");
         self.run(&source);
 
@@ -44,8 +44,8 @@ impl Lox {
         }
     }
 
-    pub fn run(&self, source: &str) {
-        let mut scanner = Scanner::new(source);
+    pub fn run(&mut self, source: &str) {
+        let mut scanner = Scanner::new(self, source);
         scanner.scan_tokens();
 
         for token in scanner.tokens {
@@ -53,11 +53,11 @@ impl Lox {
         }
     }
 
-    pub fn error(&mut self, line: usize, message: &str) {
+    pub fn error(&mut self, line: u32, message: &str) {
         self.report(line, "", message);
     }
 
-    pub fn report(&mut self, line: usize, location: &str, message: &str) {
+    pub fn report(&mut self, line: u32, location: &str, message: &str) {
         eprintln!("[line {}] Error {}: {}", line, location, message);
         self.had_error = true;
     }

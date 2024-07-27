@@ -1,7 +1,9 @@
 use crate::token::Token;
 use crate::token_type::TokenType;
+use crate::Lox;
 
-pub struct Scanner {
+pub struct Scanner<'a> {
+    lox: &'a mut Lox,
     source: String,
     pub tokens: Vec<Token>,
     start: u32,
@@ -9,9 +11,10 @@ pub struct Scanner {
     line: u32,
 }
 
-impl Scanner {
-    pub fn new(source: &str) -> Scanner {
+impl Scanner<'_> {
+    pub fn new<'a>(lox: &'a mut Lox, source: &str) -> Scanner<'a> {
         Scanner {
+            lox: lox,
             source: String::from(source),
             tokens: Vec::new(),
             start: 0,
@@ -68,7 +71,67 @@ impl Scanner {
             '+' => self.add_token(TokenType::Plus),
             ';' => self.add_token(TokenType::Semicolon),
             '*' => self.add_token(TokenType::Star),
-            _ => {}
+            '!' => {
+                if self.match_char('=') {
+                    self.add_token(TokenType::BangEqual)
+                } else {
+                    self.add_token(TokenType::Bang)
+                }
+            }
+            '=' => {
+                if self.match_char('=') {
+                    self.add_token(TokenType::EqualEqual)
+                } else {
+                    self.add_token(TokenType::Equal)
+                }
+            }
+            '<' => {
+                if self.match_char('=') {
+                    self.add_token(TokenType::LessEqual)
+                } else {
+                    self.add_token(TokenType::Less)
+                }
+            }
+            '>' => {
+                if self.match_char('=') {
+                    self.add_token(TokenType::GreaterEqual)
+                } else {
+                    self.add_token(TokenType::Greater)
+                }
+            }
+            '/' => {
+                if self.match_char('/') {
+                    while self.peek() != '\n' && !self.is_at_end() {
+                        self.advance();
+                    }
+                } else {
+                    self.add_token(TokenType::Slash)
+                }
+            }
+            ' ' => {}
+            '\r' => {}
+            '\t' => {}
+            '\n' => self.line += 1,
+            _ => self.lox.error(self.line, "Unexpected character."),
         }
+    }
+
+    fn match_char(&mut self, expected: char) -> bool {
+        if self.is_at_end() {
+            return false;
+        }
+        if self.source.chars().nth(self.current as usize).unwrap() == expected {
+            return false;
+        }
+
+        self.current += 1;
+        true
+    }
+
+    fn peek(&self) -> char {
+        if self.is_at_end() {
+            return '\0';
+        }
+        self.source.chars().nth(self.current as usize).unwrap()
     }
 }
