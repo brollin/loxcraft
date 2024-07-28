@@ -117,8 +117,38 @@ impl Scanner<'_> {
             '\t' => {}
             '\n' => self.line += 1,
             '\"' => self.string(),
-            _ => self.lox.error(self.line, "Unexpected character."),
+            _ => {
+                if self.is_digit(c) {
+                    self.number();
+                } else {
+                    self.lox.error(self.line, "Unexpected character.")
+                }
+            }
         }
+    }
+
+    fn number(&mut self) {
+        while self.is_digit(self.peek()) {
+            self.advance();
+        }
+
+        // Look for a fractional part
+        if self.peek() == '.' && self.is_digit(self.peek_next()) {
+            // Consume the "."
+            self.advance();
+
+            while self.is_digit(self.peek()) {
+                self.advance();
+            }
+        }
+
+        let text = self
+            .source
+            .chars()
+            .skip(self.start as usize)
+            .take(self.current as usize)
+            .collect();
+        self.add_token_literal(TokenType::Number, text);
     }
 
     fn string(&mut self) {
@@ -164,5 +194,20 @@ impl Scanner<'_> {
             return '\0';
         }
         self.source.chars().nth(self.current as usize).unwrap()
+    }
+
+    fn peek_next(&self) -> char {
+        if (self.current + 1) as usize >= self.source.len() {
+            return '\0';
+        }
+
+        self.source
+            .chars()
+            .nth((self.current + 1) as usize)
+            .unwrap()
+    }
+
+    fn is_digit(&self, c: char) -> bool {
+        c >= '0' && c <= '9'
     }
 }
