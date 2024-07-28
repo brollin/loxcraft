@@ -33,6 +33,10 @@ impl Scanner<'_> {
     }
 
     fn add_token(&mut self, token_type: TokenType) {
+        self.add_token_literal(token_type, String::from(""))
+    }
+
+    fn add_token_literal(&mut self, token_type: TokenType, literal: String) {
         let text = self
             .source
             .chars()
@@ -40,7 +44,7 @@ impl Scanner<'_> {
             .take(self.current as usize)
             .collect();
         self.tokens
-            .push(Token::new(token_type, text, "".to_string(), self.line));
+            .push(Token::new(token_type, text, literal, self.line));
     }
 
     pub fn scan_tokens(&mut self) {
@@ -112,8 +116,35 @@ impl Scanner<'_> {
             '\r' => {}
             '\t' => {}
             '\n' => self.line += 1,
+            '\"' => self.string(),
             _ => self.lox.error(self.line, "Unexpected character."),
         }
+    }
+
+    fn string(&mut self) {
+        while self.peek() != '\"' && !self.is_at_end() {
+            if self.peek() == '\n' {
+                self.line += 1;
+            }
+            self.advance();
+        }
+
+        if self.is_at_end() {
+            self.lox.error(self.line, "Unterminated string.");
+            return;
+        }
+
+        // The closing "
+        self.advance();
+
+        // Trimmed the surrounding quotes
+        let text = self
+            .source
+            .chars()
+            .skip(self.start as usize)
+            .take(self.current as usize)
+            .collect();
+        self.add_token_literal(TokenType::String, text);
     }
 
     fn match_char(&mut self, expected: char) -> bool {
