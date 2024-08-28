@@ -12,6 +12,25 @@ pub struct Scanner<'a> {
 }
 
 impl Scanner<'_> {
+    pub const KEYWORDS: [(&'static str, TokenType); 16] = [
+        ("and", TokenType::And),
+        ("class", TokenType::Class),
+        ("else", TokenType::Else),
+        ("false", TokenType::False),
+        ("for", TokenType::For),
+        ("fun", TokenType::Fun),
+        ("if", TokenType::If),
+        ("nil", TokenType::Nil),
+        ("or", TokenType::Or),
+        ("print", TokenType::Print),
+        ("return", TokenType::Return),
+        ("super", TokenType::Super),
+        ("this", TokenType::This),
+        ("true", TokenType::True),
+        ("var", TokenType::Var),
+        ("while", TokenType::While),
+    ];
+
     pub fn new<'a>(lox: &'a mut Lox, source: &str) -> Scanner<'a> {
         Scanner {
             lox: lox,
@@ -120,11 +139,34 @@ impl Scanner<'_> {
             _ => {
                 if self.is_digit(c) {
                     self.number();
+                } else if self.is_alpha(c) {
+                    self.identifier();
                 } else {
                     self.lox.error(self.line, "Unexpected character.")
                 }
             }
         }
+    }
+
+    fn identifier(&mut self) {
+        while self.is_alpha_numeric(self.peek()) {
+            self.advance();
+        }
+
+        let text: String = self
+            .source
+            .chars()
+            .skip(self.start as usize)
+            .take(self.current as usize)
+            .collect();
+
+        for keyword in Scanner::KEYWORDS.iter() {
+            if keyword.0 == text {
+                self.add_token(keyword.1);
+                return;
+            }
+        }
+        self.add_token(TokenType::Identifier);
     }
 
     fn number(&mut self) {
@@ -207,7 +249,15 @@ impl Scanner<'_> {
             .unwrap()
     }
 
+    fn is_alpha(&self, c: char) -> bool {
+        (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_'
+    }
+
     fn is_digit(&self, c: char) -> bool {
         c >= '0' && c <= '9'
+    }
+
+    fn is_alpha_numeric(&self, c: char) -> bool {
+        self.is_alpha(c) || self.is_digit(c)
     }
 }
