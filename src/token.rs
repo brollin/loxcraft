@@ -18,7 +18,6 @@ impl Token {
     }
 
     pub fn to_string(&self) -> String {
-        format!("{} {}", self.lexeme, self.literal)
-        // return format!("{} {} {}", self.token_type, self.lexeme, self.literal);
+        return format!("{:?} {} {}", self.token_type, self.lexeme, self.literal);
     }
 }
